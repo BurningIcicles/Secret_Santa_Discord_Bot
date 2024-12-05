@@ -9,12 +9,12 @@ intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
 bot = commands.Bot(command_prefix='>', intents=intents)
-
 TOKEN = os.getenv("DISCORD_TOKEN")
 secretSantas = []
 assignments = {}
 isStarted = False
 description = "Have fun!"
+sneakPeekKey = None
 
 async def getNickname(ctx, user: discord.User):
     member = ctx.guild.get_member(user.id)
@@ -27,7 +27,19 @@ async def getNickname(ctx, user: discord.User):
 
 @bot.event
 async def on_ready():
-    await print(f'{bot.user} has connected to Discord!!')
+    channel = bot.get_channel(int(os.getenv("DISCORD_CHANNEL_ID")))
+    if channel:
+        await channel.send(f'{bot.user} has restarted!')
+
+@bot.command('info')
+async def info(ctx):
+    await ctx.send('Here is a list of the following commands: ')
+    await ctx.send('Type ">add *@user*" to add a user to the Secret Santa')
+    await ctx.send('Type ">remove *@user*" to remove a user from the Secret Santa')
+    await ctx.send('Type ">list" to list all users in the Secret Santa')
+    await ctx.send('Type ">start" to start the Secret Santa')
+    await ctx.send('Type ">verify" to check if Secret Santa assignments are valid (developer command)')
+    await ctx.send('Type ">setDescription *description*" to include a description to be sent when Secret Santa starts')
 
 @bot.command('add')
 async def addSanta(ctx, user: discord.User = None):
@@ -83,6 +95,9 @@ async def startSecretSanta(ctx):
         await ctx.send('There must be at least 3 Santas to start Secret Santa')
         return
 
+    global isStarted
+    isStarted = True
+
     await ctx.send('**Starting Rod Wave`s Secret Santa**')
     message = ""
     for user in secretSantas:
@@ -109,15 +124,23 @@ async def startSecretSanta(ctx):
         nickname = await getNickname(ctx, receiver)
         await giver.send(f"**Secret Santa has started!**\nYou are giving a gift to {nickname}! Be creative\n{description}")
 
-    global isStarted
-    isStarted = True
+# @bot.command('sneakPeek')
+# async def print(ctx, token):
+#     await ctx.send("Trying to sneakPeek")
+#     if sneakPeekKey is None:
+#         return
+    
+#     try:
+#         token = int(token)
+#         if token != sneakPeekKey:
+#             return
+#     except ValueError:
+#         return
 
-@bot.command('sneakPeek')
-async def print(ctx):
-    for key, value in assignments.items():
-        giverNickname = await getNickname(ctx, key)
-        receiverNickname = await getNickname(ctx, value)
-        await ctx.send(f'{giverNickname} is giving a gift to {receiverNickname}')
+#     for key, value in assignments.items():
+#         giverNickname = await getNickname(ctx, key)
+#         receiverNickname = await getNickname(ctx, value)
+#         await ctx.send(f'{giverNickname} is giving a gift to {receiverNickname}')
 
 @bot.command('verify')
 async def verify(ctx):
@@ -129,8 +152,6 @@ async def verify(ctx):
         if (key == value):
             await ctx.send(f'Secret Santa is invalid. Start it again')
             return
-
-    await ctx.send('Secret Santa is valid. Everyone will be getting a gift')
 
 @bot.command('setDescription')
 async def setDescription(ctx, *, _description):
