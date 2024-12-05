@@ -27,7 +27,7 @@ async def getNickname(ctx, user: discord.User):
 
 @bot.event
 async def on_ready():
-    await print(f'{bot.user} has connected to Discord!')
+    await print(f'{bot.user} has connected to Discord!!')
 
 @bot.command('add')
 async def addSanta(ctx, user: discord.User = None):
